@@ -9,13 +9,16 @@ public sealed class ModInstaller
 {
     private readonly string _repoRoot;   // STS2CompanionMod.csproj 위치
     private readonly string _gamePath;   // STS2 게임 폴더
-    private readonly string _modDir;     // <gamePath>/mods/STS2Companion
+    private readonly string _modDir;     // <modsRoot>/STS2Companion
 
     public ModInstaller(string repoRoot, string gamePath)
     {
         _repoRoot = repoRoot;
         _gamePath = gamePath;
-        _modDir   = Path.Combine(gamePath, "mods", "STS2Companion");
+        // macOS에서는 .app 번들 밖 mods/ 폴더에 설치
+        // (번들 내부는 Gatekeeper가 서명 무효화시킴)
+        _modDir = Path.Combine(
+            SteamDetector.GetModsDirectory(gamePath), "STS2Companion");
     }
 
     // ── 빌드 ──────────────────────────────────────────────────────────────

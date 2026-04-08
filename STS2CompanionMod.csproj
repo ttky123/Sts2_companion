@@ -8,9 +8,22 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <Optimize>true</Optimize>
-    <!-- 게임 설치 경로: 환경변수 STS2_PATH 또는 기본 Steam 경로로 설정 -->
+
+    <!-- 게임 설치 경로: 환경변수 STS2_PATH 우선, 없으면 OS별 Steam 기본 경로 -->
     <STS2GamePath Condition="'$(STS2GamePath)' == ''">$(STS2_PATH)</STS2GamePath>
-    <STS2GamePath Condition="'$(STS2GamePath)' == ''">$(HOME)/.steam/steam/steamapps/common/Slay the Spire 2</STS2GamePath>
+    <!-- Linux 기본 -->
+    <STS2GamePath Condition="'$(STS2GamePath)' == '' AND !$([MSBuild]::IsOSPlatform('OSX')) AND !$([MSBuild]::IsOSPlatform('Windows'))">$(HOME)/.steam/steam/steamapps/common/Slay the Spire 2</STS2GamePath>
+    <!-- macOS 기본 -->
+    <STS2GamePath Condition="'$(STS2GamePath)' == '' AND $([MSBuild]::IsOSPlatform('OSX'))">$(HOME)/Library/Application Support/Steam/steamapps/common/Slay the Spire 2</STS2GamePath>
+    <!-- Windows 기본 -->
+    <STS2GamePath Condition="'$(STS2GamePath)' == '' AND $([MSBuild]::IsOSPlatform('Windows'))">C:\Program Files (x86)\Steam\steamapps\common\Slay the Spire 2</STS2GamePath>
+
+    <!--
+      macOS: Godot 4 게임은 .app 번들로 패키징됨.
+      DLL 위치: <게임폴더>/Slay the Spire 2.app/Contents/Frameworks/
+      Windows/Linux: <게임폴더>/GodotSharp/ 및 _Data/Managed/
+    -->
+    <Sts2AppBundle>$(STS2GamePath)/Slay the Spire 2.app/Contents</Sts2AppBundle>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,14 +31,26 @@
     <PackageReference Include="Lib.Harmony" Version="2.3.*" />
   </ItemGroup>
 
-  <ItemGroup>
-    <!-- 게임 DLL 참조 — libs/README.md 참고 -->
+  <!-- ── Windows / Linux DLL 참조 ── -->
+  <ItemGroup Condition="!$([MSBuild]::IsOSPlatform('OSX'))">
     <Reference Include="GodotSharp">
       <HintPath>$(STS2GamePath)/GodotSharp/GodotSharp.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="MegaCrit.Sts2.Core">
       <HintPath>$(STS2GamePath)/Slay the Spire 2_Data/Managed/MegaCrit.Sts2.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- ── macOS DLL 참조 (.app 번들 내부) ── -->
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <Reference Include="GodotSharp">
+      <HintPath>$(Sts2AppBundle)/Frameworks/GodotSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="MegaCrit.Sts2.Core">
+      <HintPath>$(Sts2AppBundle)/Frameworks/MegaCrit.Sts2.Core.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>

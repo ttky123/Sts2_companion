@@ -1,30 +1,47 @@
 # Game DLL References
 
-이 폴더에 아래 DLL을 복사하거나 `STS2GamePath` 환경변수를 설정하세요.
+빌드 시 게임 DLL이 필요합니다. OS별 경로가 다릅니다.
 
-## 필요한 파일
+## OS별 DLL 위치
 
-| 파일 | 게임 내 경로 |
-|------|-------------|
-| `GodotSharp.dll` | `<게임설치경로>/GodotSharp/GodotSharp.dll` |
-| `MegaCrit.Sts2.Core.dll` | `<게임설치경로>/Slay the Spire 2_Data/Managed/MegaCrit.Sts2.Core.dll` |
+### Linux / Windows
+| 파일 | 경로 |
+|------|------|
+| `GodotSharp.dll` | `<게임폴더>/GodotSharp/GodotSharp.dll` |
+| `MegaCrit.Sts2.Core.dll` | `<게임폴더>/Slay the Spire 2_Data/Managed/MegaCrit.Sts2.Core.dll` |
+
+### macOS (`.app` 번들 내부)
+| 파일 | 경로 |
+|------|------|
+| `GodotSharp.dll` | `<게임폴더>/Slay the Spire 2.app/Contents/Frameworks/GodotSharp.dll` |
+| `MegaCrit.Sts2.Core.dll` | `<게임폴더>/Slay the Spire 2.app/Contents/Frameworks/MegaCrit.Sts2.Core.dll` |
 
 ## 빌드 방법
 
+### Linux
 ```bash
-# 게임 경로를 환경변수로 지정
 export STS2_PATH="$HOME/.steam/steam/steamapps/common/Slay the Spire 2"
 dotnet build -c Release
-
-# 빌드 결과물 복사
-cp bin/Release/net9.0/STS2CompanionMod.dll "$STS2_PATH/mods/STS2Companion/"
-cp mod.json "$STS2_PATH/mods/STS2Companion/"
 ```
 
-## 배포 구조
+### macOS
+```bash
+export STS2_PATH="$HOME/Library/Application Support/Steam/steamapps/common/Slay the Spire 2"
+dotnet build -c Release
+```
 
+### Windows (PowerShell)
+```powershell
+$env:STS2_PATH = "C:\Program Files (x86)\Steam\steamapps\common\Slay the Spire 2"
+dotnet build -c Release
 ```
-<게임경로>/mods/STS2Companion/
-├── STS2CompanionMod.dll
-└── mod.json
-```
+
+## mods 폴더 위치
+
+| OS | 경로 |
+|----|------|
+| Linux / Windows | `<게임폴더>/mods/STS2Companion/` |
+| macOS | `<게임폴더>/mods/STS2Companion/` (.app 번들 **밖**) |
+
+> **macOS 주의**: `.app` 번들 내부에 직접 파일을 넣으면 Gatekeeper가
+> 코드 서명을 무효화하므로, mods 폴더는 반드시 `.app` 번들 밖에 위치해야 합니다.

@@ -33,7 +33,11 @@ public static class SteamDetector
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
             string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            // 표준 macOS Steam 경로
             yield return Path.Combine(home, "Library", "Application Support", "Steam");
+            // 일부 사용자 환경에서 생기는 symlink
+            yield return Path.Combine(home, ".steam", "steam");
+            yield return Path.Combine(home, ".steam", "Steam");
         }
         else
         {
@@ -135,13 +139,33 @@ public static class SteamDetector
     }
 
     /// <summary>STS2 경로인지 검증 (핵심 파일 존재 여부 확인)</summary>
-    public static bool IsValidSts2Path(string path) =>
-        Directory.Exists(path) && (
-            // Godot 기반 게임의 특징적인 파일 확인
-            Directory.Exists(Path.Combine(path, "mods")) ||
+    public static bool IsValidSts2Path(string path)
+    {
+        if (!Directory.Exists(path)) return false;
+        return
+            // Windows 실행 파일
             File.Exists(Path.Combine(path, "Slay the Spire 2.exe")) ||
+            // Linux 실행 파일
             File.Exists(Path.Combine(path, "Slay the Spire 2.x86_64")) ||
-            File.Exists(Path.Combine(path, "Slay the Spire 2.app", "Contents",
-                "MacOS", "Slay the Spire 2"))
-        );
+            // macOS .app 번들 (ARM64 or x86_64)
+            File.Exists(Path.Combine(path, "Slay the Spire 2.app",
+                "Contents", "MacOS", "Slay the Spire 2")) ||
+            // mods 폴더 존재 (이미 설치된 환경)
+            Directory.Exists(Path.Combine(path, "mods"));
+    }
+
+    /// <summary>
+    /// macOS에서 mods 폴더 위치 반환.
+    /// Godot .app 번들은 macOS Gatekeeper 때문에 번들 내부 쓰기가 막히므로
+    /// mods 폴더는 항상 .app 번들 밖(게임 폴더 바로 아래)에 위치한다.
+    /// </summary>
+    public static string GetModsDirectory(string gamePath)
+    {
+        // macOS: .app 번들 옆에 mods/ 폴더
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            return Path.Combine(gamePath, "mods");
+
+        // Windows / Linux: 게임 폴더 바로 아래
+        return Path.Combine(gamePath, "mods");
+    }
 }
