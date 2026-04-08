@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <AssemblyName>sts2-companion-install</AssemblyName>
+    <RootNamespace>STS2Companion.Installer</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- 단일 파일 self-contained 배포 설정 -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimmerRootDescriptor>TrimRoots.xml</TrimmerRootDescriptor>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+
+    <!-- 버전 정보 -->
+    <Version>1.0.0</Version>
+    <AssemblyTitle>STS2 Companion Installer</AssemblyTitle>
+    <Description>STS2 Companion Mod 자동 설치 도구</Description>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,7 @@
+<linker>
+  <!-- 런타임 타입 정보 보존 (콘솔 앱 최소 요구) -->
+  <assembly fullname="System.Runtime" preserve="all" />
+  <assembly fullname="System.Console" preserve="all" />
+  <assembly fullname="System.IO" preserve="all" />
+  <assembly fullname="System.Diagnostics.Process" preserve="all" />
+</linker>
