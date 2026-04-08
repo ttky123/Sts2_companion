@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <AssemblyName>STS2CompanionMod</AssemblyName>
+    <RootNamespace>STS2CompanionMod</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <Optimize>true</Optimize>
+    <!-- 게임 설치 경로: 환경변수 STS2_PATH 또는 기본 Steam 경로로 설정 -->
+    <STS2GamePath Condition="'$(STS2GamePath)' == ''">$(STS2_PATH)</STS2GamePath>
+    <STS2GamePath Condition="'$(STS2GamePath)' == ''">$(HOME)/.steam/steam/steamapps/common/Slay the Spire 2</STS2GamePath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- HarmonyLib: Harmony 2.x (NuGet) -->
+    <PackageReference Include="Lib.Harmony" Version="2.3.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 게임 DLL 참조 — libs/README.md 참고 -->
+    <Reference Include="GodotSharp">
+      <HintPath>$(STS2GamePath)/GodotSharp/GodotSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="MegaCrit.Sts2.Core">
+      <HintPath>$(STS2GamePath)/Slay the Spire 2_Data/Managed/MegaCrit.Sts2.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>
