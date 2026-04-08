@@ -1,6 +1,7 @@
 using Godot;
 using MegaCrit.Sts2.Core.Runs;
 using STS2CompanionMod.Analysis;
+using STS2CompanionMod.Services;
 
 namespace STS2CompanionMod.Overlay;
 
@@ -14,8 +15,12 @@ public static class CompanionOverlay
     public static Control?  Root       { get; private set; }
     public static bool      IsVisible  { get; private set; } = true;
 
+    // 온라인 데이터 서비스 (ModEntry에서 주입)
+    public static OnlineDataService? DataService { get; private set; }
+
     private static DeckPanel?   _deckPanel;
     private static RewardPanel? _rewardPanel;
+    private static Label?       _statusLabel;
 
     // 마지막 분석 결과 캐싱 (매 프레임 재계산 방지)
     private static List<ArchetypeMatchResult> _lastAnalysis = new();
@@ -26,6 +31,19 @@ public static class CompanionOverlay
     // 분석 쿨다운 (초)
     private const double AnalysisIntervalSec = 2.0;
     private static double _timeSinceLastAnalysis = 0;
+
+    /// <summary>온라인 데이터 서비스 주입 (ModEntry에서 호출)</summary>
+    public static void SetDataService(OnlineDataService svc)
+    {
+        DataService = svc;
+        svc.OnDataUpdated += OnDataUpdated;
+    }
+
+    private static void OnDataUpdated()
+    {
+        if (_statusLabel is not null && DataService is not null)
+            _statusLabel.Text = DataService.StatusText;
+    }
 
     /// <summary>지정된 부모 노드에 오버레이를 주입한다.</summary>
     public static void Inject(Node parent)
@@ -50,8 +68,17 @@ public static class CompanionOverlay
         _deckPanel   = new DeckPanel();
         _rewardPanel = new RewardPanel();
 
+        // 온라인 데이터 상태 표시 라벨 (패널 하단)
+        _statusLabel = new Label
+        {
+            Text         = DataService?.StatusText ?? "온라인 데이터 대기 중...",
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        StyleHelper.SetLabelStyle(_statusLabel, StyleHelper.TextMuted, 10);
+
         vbox.AddChild(_deckPanel.Root);
         vbox.AddChild(_rewardPanel.Root);
+        vbox.AddChild(_statusLabel);
 
         parent.AddChild(Root);
 
@@ -129,9 +156,10 @@ public static class CompanionOverlay
             Root.GetTree().ProcessFrame -= OnProcessFrame;
             Root.TreeExiting -= OnTreeExiting;
         }
-        Root        = null;
-        _deckPanel  = null;
+        Root         = null;
+        _deckPanel   = null;
         _rewardPanel = null;
+        _statusLabel = null;
     }
 
     private static RunState? TryGetRunState()

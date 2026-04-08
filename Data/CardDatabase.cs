@@ -1,9 +1,12 @@
+using STS2CompanionMod.Services;
+
 namespace STS2CompanionMod.Data;
 
 /// <summary>
 /// 카드 이름 → 소속 아키타입 매핑.
 /// 아키타입 점수 계산 시 이 DB를 참조하지 않고 ArchetypeDatabase의 CoreCards/GoodCards를 직접 사용.
 /// 여기서는 카드별 일반 평가(범용성)를 관리.
+/// 온라인 데이터가 로드되면 UpdateRelicTiers() / UpdateCardMeta()로 런타임 갱신된다.
 /// </summary>
 public static class CardDatabase
 {
@@ -63,9 +66,43 @@ public static class CardDatabase
         "Writhe",       // 항상 핸드에서 시작하는 부담
     };
 
-    // 렐릭 등급 (캐릭터 공통 + 캐릭터 전용)
-    public static readonly IReadOnlyDictionary<string, RelicTier> RelicTiers =
-        new Dictionary<string, RelicTier>
+    // 온라인 데이터에서 채워지는 카드 승률 메타 (ID → OnlineTierEntry)
+    // 초기에는 비어 있고 OnlineDataService가 로드되면 갱신됨
+    private static Dictionary<string, OnlineTierEntry> _cardMeta = new(StringComparer.OrdinalIgnoreCase);
+    public  static IReadOnlyDictionary<string, OnlineTierEntry> CardMeta => _cardMeta;
+
+    /// <summary>온라인 카드 승률 메타 갱신 (OnlineDataService가 호출)</summary>
+    public static void UpdateCardMeta(Dictionary<string, OnlineTierEntry> meta)
+    {
+        _cardMeta = meta;
+    }
+
+    /// <summary>렐릭 티어를 온라인 데이터로 갱신 (OnlineDataService가 호출)</summary>
+    public static void UpdateRelicTiers(Dictionary<string, RelicTier> updates)
+    {
+        foreach (var (name, tier) in updates)
+            _relicTiers[name] = tier;
+    }
+
+    /// <summary>
+    /// 카드 이름으로 온라인 승률 정보 조회.
+    /// ID 기반(예: "AGGRESSION") 또는 표시 이름(예: "Aggression") 양쪽 시도.
+    /// </summary>
+    public static OnlineTierEntry? GetCardMeta(string cardName)
+    {
+        // 표시 이름으로 먼저 시도
+        var entry = _cardMeta.Values.FirstOrDefault(e =>
+            string.Equals(e.Name, cardName, StringComparison.OrdinalIgnoreCase));
+        if (entry is not null) return entry;
+
+        // ID로 시도 (SCREAMING_CASE 변환)
+        string id = cardName.ToUpper().Replace(' ', '_');
+        return _cardMeta.TryGetValue(id, out var byId) ? byId : null;
+    }
+
+    // 렐릭 등급 — 변경 가능한 딕셔너리 (온라인 데이터로 덮어씌움)
+    private static readonly Dictionary<string, RelicTier> _relicTiers =
+        new(StringComparer.OrdinalIgnoreCase)
         {
             // S 티어
             ["Snecko Eye"]          = RelicTier.S,
@@ -104,6 +141,9 @@ public static class CardDatabase
             ["Cracked Core"]        = RelicTier.B,  // Defect 시작 렐릭
             ["Pure Water"]          = RelicTier.B,  // Watcher 시작 렐릭
         };
+
+    // 공개 읽기 전용 뷰
+    public static IReadOnlyDictionary<string, RelicTier> RelicTiers => _relicTiers;
 }
 
 public enum RelicTier { S, A, B, C }

@@ -70,6 +70,13 @@ public static class RewardScorer
             return new RewardCardScore(cardName, ScoreAvoid, "건너뜀",
                 "범용 기피 카드 — 런에 부정적 영향", null);
 
+        // 1-b. 온라인 데이터에서 D 티어로 판정된 카드도 건너뜀
+        var onlineMeta = CardDatabase.GetCardMeta(normalized);
+        if (onlineMeta is not null && onlineMeta.Tier == Services.OnlineTier.D)
+            return new RewardCardScore(cardName, ScoreAvoid, "건너뜀",
+                $"커뮤니티 D 티어 (승률 델타 {Services.TierMapper.FormatDelta(onlineMeta.WinRateDelta)}, {onlineMeta.SampleSize:N0}개 런)",
+                null);
+
         // 2. 활성 빌드들에서 코어 카드인지 확인
         foreach (var build in activeBuilds)
         {
@@ -118,7 +125,23 @@ public static class RewardScorer
                 "범용적으로 유용한 카드", null);
         }
 
-        // 4. 해당 없음 — 중립
+        // 4. 온라인 데이터에 S/A 티어이면 범용 좋음으로 처리
+        if (onlineMeta is not null)
+        {
+            return onlineMeta.Tier switch
+            {
+                Services.OnlineTier.S => new RewardCardScore(cardName, ScoreGood + 0.10f, "좋음",
+                    $"커뮤니티 S 티어 (승률 델타 {Services.TierMapper.FormatDelta(onlineMeta.WinRateDelta)}, {onlineMeta.SampleSize:N0}개 런)",
+                    null),
+                Services.OnlineTier.A => new RewardCardScore(cardName, ScoreGood - 0.05f, "좋음",
+                    $"커뮤니티 A 티어 (승률 델타 {Services.TierMapper.FormatDelta(onlineMeta.WinRateDelta)})",
+                    null),
+                _ => new RewardCardScore(cardName, ScoreNeutral, "보통",
+                    $"커뮤니티 {onlineMeta.Tier} 티어 — 시너지 확인 필요", null),
+            };
+        }
+
+        // 5. 해당 없음 — 중립
         string neutralReason = ascensionLevel >= 15
             ? "현재 빌드와 시너지 없음 — 고승천에선 건너뜀 권장"
             : "시너지 없음, 덱 두께 증가 주의";
